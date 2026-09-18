@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#172033">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MemoCards PRO">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>MemoCards PRO</title>
+    <style>
+        *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f3f5f8;color:#172033}
+        header{padding:18px 22px;background:#fff;border-bottom:1px solid #dfe4eb;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+        h1{margin:0;font-size:24px}.sub{color:#667085;font-size:14px}.wrap{max-width:1100px;margin:auto;padding:22px}
+        .panel{background:#fff;border:1px solid #dfe4eb;border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 3px 12px #00000008}
+        .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}button,.btn{border:0;border-radius:10px;padding:10px 14px;background:#172033;color:white;cursor:pointer;font-weight:650}button.secondary{background:#e9edf3;color:#172033}button.danger{background:#b42318}input[type=text],input[type=number]{border:1px solid #cfd6e0;border-radius:10px;padding:10px;font:inherit}input[type=file]{display:none}
+        .card-editor{border:1px solid #dfe4eb;border-radius:14px;padding:15px;margin:12px 0;background:#fbfcfe}.card-head{display:flex;justify-content:space-between;gap:10px;align-items:center}
+        .face-editor{margin-top:13px}.label{font-weight:750;margin-bottom:7px}.tools{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}
+        .tools button{padding:7px 9px;font-size:13px}
+        .symbol-keyboard{border:1px solid #dfe4eb;border-radius:11px;background:#f7f9fc;padding:8px;margin-top:7px}
+        .symbol-row{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0}
+        .symbol-row button{min-width:32px;padding:6px 7px;font-size:15px}
+        .math-op{display:inline-flex;vertical-align:middle;align-items:center;position:relative;margin:0 3px;font-family:serif}
+        .math-op .op-symbol{font-size:1.55em;line-height:1}
+        .math-op .limits{display:inline-flex;flex-direction:column;align-items:center;font-size:.65em;line-height:1;margin-left:-2px}
+        .math-op .limits span{min-width:1.2em;text-align:center;outline:none}.fraction{display:inline-flex;flex-direction:column;vertical-align:middle;align-items:center;line-height:1.05;margin:0 3px;font-family:serif}.fraction .num,.fraction .den{min-width:1.4em;text-align:center;padding:0 3px;outline:none}.fraction .num{border-bottom:1px solid currentColor}.fraction .den{border-top:0}.rich .fraction{font-size:1em}.format-active{background:#d7deea!important}.toolbar-sep{width:1px;background:#cfd6e0;margin:0 2px}
+        .rich ol,.rich ul{padding-left:28px}
+        .rich [style*="text-align: center"]{text-align:center}
+        .rich{min-height:150px;max-height:330px;overflow:auto;border:1px solid #cfd6e0;border-radius:11px;background:#fff;padding:12px;outline:none;line-height:1.5}
+        .rich:focus{border-color:#697586;box-shadow:0 0 0 3px #98a2b324}.rich:empty:before{content:attr(data-placeholder);color:#98a2b3}
+        .rich img,.face-text img{max-width:100%;height:auto;display:block;margin:9px auto;cursor:zoom-in;border-radius:8px}.rich img{max-height:240px}
+        .mandatory{display:flex;gap:7px;align-items:center;font-size:14px;margin-top:9px}.tags{width:100%;margin-top:8px}
+        .game{display:none}.game-card{max-width:760px;margin:20px auto}.face{min-height:390px;max-height:65vh;overflow:auto;border-radius:22px;padding:28px;background:#fff;border:1px solid #dfe4eb;box-shadow:0 10px 30px #00000010}
+        .face-text{font-size:20px;line-height:1.55}.side-title{font-size:13px;color:#667085;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}.answer{display:none}.actions{display:flex;justify-content:center;gap:12px;margin-top:15px;flex-wrap:wrap}
+        .stat{display:flex;gap:14px;flex-wrap:wrap}.pill{padding:8px 12px;border-radius:999px;background:#eef2f7}.toast{position:fixed;right:18px;bottom:18px;background:#172033;color:#fff;padding:12px 15px;border-radius:11px;display:none;z-index:20}
+        .lightbox{display:none;position:fixed;inset:0;background:#000c;z-index:100;align-items:center;justify-content:center;padding:25px}.lightbox img{max-width:95vw;max-height:90vh;border-radius:10px}.lightbox button{position:absolute;top:15px;right:15px;border-radius:50%;width:42px;height:42px;padding:0;font-size:22px}
+        .note{font-size:13px;color:#667085}.empty{text-align:center;color:#667085;padding:35px}
+        @media(max-width:650px){.wrap{padding:12px}.face{min-height:320px;padding:19px}.face-text{font-size:18px}.rich{min-height:130px}}
+    
+/* ===== Mobile-friendly game setup dialog ===== */
+.setup-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:#0008}
+.setup-dialog{width:min(430px,100%);box-sizing:border-box;background:#fff;color:#172033;border:1px solid #dfe4eb;border-radius:18px;padding:18px;box-shadow:0 18px 55px #0004}
+.setup-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.setup-head h2{margin:0;font-size:21px}
+.setup-close{width:44px;min-width:44px;height:44px;padding:0;font-size:24px;line-height:1}.setup-info{font-size:14px;color:#667085;margin:8px 0 14px}
+.setup-number-row{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 20px}.setup-number-row button{width:52px;min-width:52px;height:52px;padding:0;font-size:25px}
+#gameCardCount{width:100px;min-height:52px;box-sizing:border-box;text-align:center;font-size:21px;border:1px solid #cfd6e0;border-radius:11px}.setup-actions{display:flex;gap:9px}.setup-actions button{flex:1 1 0;min-height:48px}
+@media(max-width:430px){.setup-modal{padding:10px}.setup-dialog{padding:15px;border-radius:16px}.setup-actions{flex-direction:column-reverse}.setup-actions button{width:100%}}
+</style>
+</head>
+<body>
+<header><h1>🧠 MemoCards PRO</h1><span class="sub">Текст + картинки прямо внутри текста</span></header>
+<div class="wrap">
+    <section id="editor" class="panel">
+        <div class="row">
+            <input id="deckName" type="text" placeholder="Название набора" style="flex:1">
+            <button onclick="addCard()">＋ Добавить карточку</button>
+            <button class="secondary" onclick="openGameSetup()">▶ Начать игру</button>
+            <button class="secondary" onclick="exportData()">Экспорт</button>
+            <label class="btn secondary">Импорт<input type="file" accept=".json" onchange="importData(event)"></label>
+        </div>
+        <p class="note">Картинку можно вставить курсором прямо между словами/абзацами. Работает кнопка «Картинка», вставка Ctrl+V и перетаскивание изображения мышью.</p>
+        <div id="cards"></div>
+    </section>
+
+    <section id="game" class="panel game">
+        <div class="row" style="justify-content:space-between">
+            <button class="secondary" onclick="backToEditor()">← Редактор</button>
+            <strong id="progress"></strong>
+        </div>
+        <div class="game-card">
+            <div class="face question" id="qFace" onclick="flipByCard(event)"><div class="side-title">Вопрос</div><div class="face-text" id="question"></div></div>
+            <div class="face answer" id="aFace" onclick="flipByCard(event)"><div class="side-title">Ответ</div><div class="face-text" id="answer"></div></div>
+            <div class="actions" id="flipActions"><button onclick="flip()">Показать ответ</button></div>
+            <div class="actions" id="markActions" style="display:none">
+                <button onclick="mark(false)" class="danger">✕ Не угадал</button>
+                <button onclick="mark(true)">✓ Угадал</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="result" class="panel" style="display:none">
+        <h2>Результат</h2><div class="stat" id="stats"></div>
+        <div id="wrongList"></div>
+        <div class="row"><button onclick="openGameSetup()">Играть ещё</button><button class="secondary" onclick="backToEditor()">В редактор</button></div>
+    </section>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="lightbox" class="lightbox" onclick="closeLightbox()"><button>×</button><img id="zoomImg" onclick="event.stopPropagation()"></div>
+
+<script>
+    const KEY='memoCardsPRO';
+    let cards=[],game=[],idx=0,right=0,wrong=0,history=[];
+
+    const $=id=>document.getElementById(id);
+    function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+    function toast(t){$('toast').textContent=t;$('toast').style.display='block';clearTimeout(window.tt);window.tt=setTimeout(()=>$('toast').style.display='none',2500)}
+    function save(){
+        try{localStorage.setItem(KEY,JSON.stringify({deckName:$('deckName').value,cards}));return true}
+        catch(e){window.__memoStorageUnavailable=true;return false}
+    }
+    function loadSaved(){
+        try{return JSON.parse(localStorage.getItem(KEY)||'{}')}
+        catch(e){window.__memoStorageUnavailable=true;return {}}
+    }
+    function strip(s){return (s||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim()}
+    function valid(c){return !!(strip(c.q)||strip(c.a)||c.qi||c.ai)}
+
+    function oldToHtml(text,img){
+        let s=text||'';
+        if(img)s += '<p><img src="'+img.replace(/"/g,'&quot;')+'"></p>';
+        return s;
+    }
+    function normalize(c){
+        return {id:c.id||uid(),q:c.q||'',a:c.a||'',qi:c.qi||'',ai:c.ai||'',tags:c.tags||'',mandatory:!!c.mandatory};
+    }
+
+    const greekUpper=['Α','Β','Γ','Δ','Ε','Ζ','Η','Θ','Ι','Κ','Λ','Μ','Ν','Ξ','Ο','Π','Ρ','Σ','Τ','Υ','Φ','Χ','Ψ','Ω'];
+    const greekLower=['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','σ','τ','υ','φ','χ','ψ','ω'];
+    const mathSymbols=['∅','∩','∪','√','∫','∑','⋂','⋃','∞','≤','≥','≠','≈','→','↔','∀','∃'];
+    const latin=['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
+    const digits=['0','1','2','3','4','5','6','7','8','9'];
+    const combinatorics=[['Cₙᵏ','Cₙᵏ'],['Aₙᵏ','Aₙᵏ'],['Pₙ','Pₙ'],['n!','n!'],['C(n,k)','C(n,k)'],['A(n,k)','A(n,k)']];
+
+    function btn(label,action,title=''){
+        return `<button type="button" class="secondary" data-action="${action}" title="${esc(title)}">${label}</button>`;
+    }
+    function toolbar(id,side){
+        const key=id+':'+side;
+        const upper=greekUpper.map(x=>btn(x,'sym:'+key+':'+x)).join('');
+        const lower=greekLower.map(x=>btn(x,'sym:'+key+':'+x)).join('');
+        const syms=mathSymbols.map(x=>{
+            const action=(x==='∫'||x==='∑'||x==='⋂'||x==='⋃')?'op:'+key+':'+x:'sym:'+key+':'+x;
+            return btn(x,action);
+        }).join('');
+        const comb=combinatorics.map(([label,value])=>btn(label,'sym:'+key+':'+value,'Комбинаторика')).join('');
+        return `
+          ${btn('<b>B</b>','bold:'+key,'Жирный')}
+          ${btn('• список','ul:'+key,'Маркированный список')}
+          ${btn('1. список','ol:'+key,'Нумерованный список')}
+          ${btn('≡ центр','center:'+key,'Выровнять по центру')}
+          ${btn('x²','supfmt:'+key,'Верхний индекс: выделите текст и нажмите')}
+          ${btn('x₂','subfmt:'+key,'Нижний индекс: выделите текст и нажмите')}
+          ${btn('↔ снять формат','removefmt:'+key,'Снять форматирование с выделенного текста')}
+          ${btn('⁄ дробь','fraction:'+key,'Создать вертикальную дробь')}
+          ${btn('＋ Картинка','img:'+key,'Картинка в текст')}
+          <div class="symbol-keyboard" style="width:100%">
+            <div class="note">Греческие буквы</div>
+            <div class="symbol-row">${upper}</div>
+            <div class="symbol-row">${lower}</div>
+            <div class="note">Математические символы</div>
+            <div class="symbol-row">${syms}</div>
+            <div class="note">Комбинаторика</div>
+            <div class="symbol-row">${comb}</div>
+          </div>`;
+    }
+
+    function getEditor(key){
+        const [id,side]=key.split(':');
+        return document.querySelector(`[data-rich="${side}"][data-id="${CSS.escape(id)}"]`);
+    }
+    function rememberEditor(ed){
+        ed?.focus();
+        if(ed) savedRange = saveSelection(ed);
+    }
+    let savedRange=null;
+    function saveSelection(ed){
+        const sel=window.getSelection();
+        if(!sel.rangeCount || !ed.contains(sel.anchorNode)) return null;
+        return sel.getRangeAt(0).cloneRange();
+    }
+    function restoreSelection(ed){
+        ed.focus();
+        if(savedRange){
+            const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange);
+        }
+    }
+    function insertTextAtSelection(ed,text){
+        restoreSelection(ed);
+        document.execCommand('insertText',false,text);
+        savedRange=saveSelection(ed);
+        sync();
+    }
+    function insertSupSub(ed,text,tag){
+        restoreSelection(ed);
+        document.execCommand('insertHTML',false,`<${tag}>${esc(text)}</${tag}>`);
+        savedRange=saveSelection(ed);sync();
+    }
+    function insertOperator(ed,symbol){
+        restoreSelection(ed);
+        let top=prompt(`Верхняя подпись для ${symbol} (оставьте пустой, если не нужна):`,'');
+        if(top===null)return;
+        let bottom=prompt(`Нижняя подпись для ${symbol} (оставьте пустой, если не нужна):`,'');
+        if(bottom===null)return;
+        const safeTop=esc(top),safeBottom=esc(bottom);
+        const html=`<span class="math-op" contenteditable="false"><span class="op-symbol">${symbol}</span>${(top||bottom)?`<span class="limits"><span>${safeTop}</span><span>${safeBottom}</span></span>`:''}</span>&nbsp;`;
+        document.execCommand('insertHTML',false,html);
+        savedRange=saveSelection(ed);sync();
+    }
+
+    function wrapSelection(ed,tag){
+        restoreSelection(ed);
+        const sel=window.getSelection();
+        if(!sel.rangeCount || !ed.contains(sel.anchorNode)){toast('Сначала выделите текст');return}
+        const range=sel.getRangeAt(0);
+        if(range.collapsed){toast('Сначала выделите текст');return}
+        const el=document.createElement(tag);
+        try{
+            el.appendChild(range.extractContents());
+            range.insertNode(el);
+            range.selectNodeContents(el);
+            sel.removeAllRanges();sel.addRange(range);
+            savedRange=range.cloneRange();
+            sync();
+        }catch(e){toast('Не удалось применить форматирование')}
+    }
+
+    function removeFormatting(ed){
+        restoreSelection(ed);
+        const sel=window.getSelection();
+        if(!sel.rangeCount || !ed.contains(sel.anchorNode)){toast('Сначала выделите текст');return}
+        const range=sel.getRangeAt(0);
+        if(range.collapsed){toast('Сначала выделите текст');return}
+        try{document.execCommand('removeFormat',false,null)}catch(e){}
+        const nodes=[...ed.querySelectorAll('sup,sub,strong,b,em,i,u,s,strike,del,mark,font')];
+        nodes.forEach(el=>{
+            if(sel.containsNode(el,true)){
+                const parent=el.parentNode;
+                while(el.firstChild) parent.insertBefore(el.firstChild,el);
+                parent.removeChild(el);
+            }
+        });
+        savedRange=range.cloneRange();sync();
+    }
+
+    function insertFraction(ed){
+        restoreSelection(ed);
+        const sel=window.getSelection();
+        if(!sel.rangeCount || !ed.contains(sel.anchorNode)){toast('Поставьте курсор в поле');return}
+        const range=sel.getRangeAt(0);
+        let numerator='',denominator='';
+        if(!range.collapsed){
+            const tmp=document.createElement('div');
+            tmp.appendChild(range.cloneContents());
+            const plain=(tmp.textContent||'').trim();
+            const slash=plain.indexOf('/');
+            if(slash>=0 && !tmp.querySelector('img')){
+                numerator=esc(plain.slice(0,slash).trim());
+                denominator=esc(plain.slice(slash+1).trim());
+            }else{
+                numerator=tmp.innerHTML;
+            }
+            range.deleteContents();
+        }
+        if(!numerator) numerator='';
+        if(!denominator) denominator='';
+        const html=`<span class="fraction"><span class="num" contenteditable="true">${numerator}</span><span class="den" contenteditable="true">${denominator}</span></span>&nbsp;`;
+        const t=document.createElement('template');t.innerHTML=html;
+        const node=t.content.firstElementChild;
+        range.insertNode(node);
+        const den=node.querySelector('.den');
+        const r=document.createRange();r.selectNodeContents(den);r.collapse(false);
+        sel.removeAllRanges();sel.addRange(r);
+        savedRange=r.cloneRange();sync();
+    }
+
+    function render(){
+        const box=$('cards'); box.innerHTML='';
+        if(!cards.length){box.innerHTML='<div class="empty">Карточек пока нет. Нажмите «Добавить карточку».</div>';return}
+        cards.forEach((c,i)=>{
+            const el=document.createElement('div');el.className='card-editor';
+            el.innerHTML=`
+      <div class="card-head"><strong>Карточка ${i+1}</strong><button class="danger" data-del="${c.id}">Удалить</button></div>
+      <div class="face-editor">
+        <div class="label">Рубашка / вопрос</div>
+        <div class="tools">
+          ${toolbar(c.id,'q')}
+        </div>
+        <div class="rich" contenteditable="true" data-rich="q" data-id="${c.id}" data-placeholder="Введите вопрос…">${c.q}</div>
+      </div>
+      <div class="face-editor">
+        <div class="label">Ответ</div>
+        <div class="tools">
+          ${toolbar(c.id,'a')}
+        </div>
+        <div class="rich" contenteditable="true" data-rich="a" data-id="${c.id}" data-placeholder="Введите ответ…">${c.a}</div>
+      </div>
+      <label class="mandatory"><input type="checkbox" data-mand="${c.id}" ${c.mandatory?'checked':''}> Обязательно включать эту карточку в игру</label>
+      <input class="tags" type="text" data-tags="${c.id}" value="${esc(c.tags)}" placeholder="Теги (необязательно)">
+    `;
+            box.appendChild(el);
+        });
+    }
+    function esc(s){return String(s||'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+
+    function addCard(){cards.push(normalize({}));save();render();setTimeout(()=>document.querySelector('.card-editor:last-child .rich')?.focus(),50)}
+    function find(id){return cards.find(c=>c.id===id)}
+    function sync(){
+        document.querySelectorAll('[data-rich]').forEach(e=>{let c=find(e.dataset.id);if(c)c[e.dataset.rich]=e.innerHTML});
+        document.querySelectorAll('[data-tags]').forEach(e=>{let c=find(e.dataset.tags);if(c)c.tags=e.value});
+        document.querySelectorAll('[data-mand]').forEach(e=>{let c=find(e.dataset.mand);if(c)c.mandatory=e.checked});
+        save();
+    }
+    document.addEventListener('input',e=>{if(e.target.matches('[data-rich],[data-tags]'))sync()});
+    document.addEventListener('change',e=>{if(e.target.matches('[data-mand]'))sync()});
+    document.addEventListener('mousedown',e=>{
+        const b=e.target.closest('[data-action]');
+        if(b)e.preventDefault();
+    });
+    document.addEventListener('click',e=>{
+        const action=e.target.closest('[data-action]')?.dataset.action;
+        if(action){
+            const parts=action.split(':');
+            const kind=parts[0], key=parts[1]+':'+parts[2], value=parts.slice(3).join(':');
+            const ed=getEditor(key);
+            if(ed){
+                rememberEditor(ed);
+                if(kind==='bold')document.execCommand('bold');
+                else if(kind==='ul')document.execCommand('insertUnorderedList');
+                else if(kind==='ol')document.execCommand('insertOrderedList');
+                else if(kind==='center')document.execCommand('justifyCenter');
+                else if(kind==='supfmt')wrapSelection(ed,'sup');
+                else if(kind==='subfmt')wrapSelection(ed,'sub');
+                else if(kind==='removefmt')removeFormatting(ed);
+                else if(kind==='fraction')insertFraction(ed);
+                else if(kind==='clear'){ed.innerHTML=strip(ed.innerHTML);sync()}
+                else if(kind==='img')chooseImage(key.split(':')[0],key.split(':')[1]);
+                else if(kind==='sym')insertTextAtSelection(ed,value);
+                else if(kind==='sup')insertSupSub(ed,value,'sup');
+                else if(kind==='sub')insertSupSub(ed,value,'sub');
+                else if(kind==='op')insertOperator(ed,value);
+                sync();
+            }
+            return;
+        }
+        const del=e.target.closest('[data-del]'); if(del){cards=cards.filter(c=>c.id!==del.dataset.del);save();render();return}
+        const img=e.target.closest('[data-img]'); if(img){const [id,side]=img.dataset.img.split(':');chooseImage(id,side);return}
+        const clr=e.target.closest('[data-clear]'); if(clr){const [id,side]=clr.dataset.clear.split(':');let ed=document.querySelector(`[data-rich="${side}"][data-id="${id}"]`);ed.innerHTML=strip(ed.innerHTML);sync();return}
+        if(e.target.matches('.rich img,.face-text img'))openLightbox(e.target.src);
+    });
+    function chooseImage(id,side){
+        const input=document.createElement('input');input.type='file';input.accept='image/*';
+        input.onchange=()=>{if(input.files[0])insertFile(id,side,input.files[0])};input.click();
+    }
+    function insertFile(id,side,file){
+        if(file.size>8*1024*1024){toast('Изображение слишком большое (максимум 8 МБ)');return}
+        const r=new FileReader();r.onload=()=>{
+            const ed=document.querySelector(`[data-rich="${side}"][data-id="${id}"]`);
+            if(!ed)return;
+            ed.focus();insertHtmlAtCursor('<img src="'+r.result+'">');sync();
+        };r.readAsDataURL(file);
+    }
+    function insertHtmlAtCursor(html){
+        const sel=window.getSelection();
+        if(!sel.rangeCount)return;
+        const range=sel.getRangeAt(0);range.deleteContents();
+        const t=document.createElement('template');t.innerHTML=html;
+        const frag=t.content.cloneNode(true);range.insertNode(frag);
+        range.collapse(false);sel.removeAllRanges();sel.addRange(range);
+    }
+    document.addEventListener('paste',e=>{
+        const ed=e.target.closest('.rich');if(!ed)return;
+        const file=[...(e.clipboardData?.files||[])].find(f=>f.type.startsWith('image/'));
+        if(file){e.preventDefault();const id=ed.dataset.id,side=ed.dataset.rich;insertFile(id,side,file)}
+    });
+    document.addEventListener('drop',e=>{
+        const ed=e.target.closest('.rich');if(!ed)return;
+        const file=[...(e.dataTransfer?.files||[])].find(f=>f.type.startsWith('image/'));
+        if(file){e.preventDefault();const id=ed.dataset.id,side=ed.dataset.rich;insertFile(id,side,file)}
+    });
+
+    function openGameSetup(){
+        sync();
+        const usable=cards.filter(valid), mand=usable.filter(c=>c.mandatory);
+        if(!usable.length){toast('Сначала добавьте хотя бы одну карточку');return}
+        const old=$('gameSetupModal'); if(old) old.remove();
+        const max=usable.length, min=Math.max(1,mand.length);
+        const initial=Math.min(max,Math.max(min,Math.min(10,max)));
+        const modal=document.createElement('div');
+        modal.id='gameSetupModal'; modal.className='setup-modal';
+        modal.innerHTML=`<div class="setup-dialog" role="dialog" aria-modal="true">
+          <div class="setup-head"><h2>Настройка игры</h2><button type="button" class="secondary setup-close">×</button></div>
+          <p>Сколько карточек включить в игру?</p>
+          <div class="setup-info">Доступно: <strong>${max}</strong>${mand.length?` · Обязательных: <strong>${mand.length}</strong>`:''}</div>
+          <div class="setup-number-row"><button type="button" class="secondary setup-minus">−</button><input id="gameCardCount" type="number" inputmode="numeric" min="${min}" max="${max}" value="${initial}"><button type="button" class="secondary setup-plus">+</button></div>
+          <div class="setup-actions"><button type="button" class="secondary setup-cancel">Отмена</button><button type="button" class="setup-start">▶ Начать игру</button></div>
+        </div>`;
+        document.body.appendChild(modal);
+        const input=$('gameCardCount');
+        const clamp=()=>{let n=parseInt(input.value,10);if(!Number.isFinite(n))n=initial;n=Math.min(max,Math.max(min,n));input.value=n;return n};
+        const close=()=>modal.remove();
+        modal.querySelector('.setup-close').onclick=close; modal.querySelector('.setup-cancel').onclick=close;
+        modal.onclick=e=>{if(e.target===modal)close()};
+        modal.querySelector('.setup-minus').onclick=()=>{input.value=Math.max(min,(parseInt(input.value,10)||initial)-1);clamp()};
+        modal.querySelector('.setup-plus').onclick=()=>{input.value=Math.min(max,(parseInt(input.value,10)||initial)+1);clamp()};
+        input.onchange=clamp;
+        input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();modal.querySelector('.setup-start').click()}else if(e.key==='Escape')close()};
+        modal.querySelector('.setup-start').onclick=()=>{const n=clamp();close();begin(n)};
+        requestAnimationFrame(()=>{input.focus();input.select()});
+    }
+    function begin(n){
+        const usable=cards.filter(valid), mand=usable.filter(c=>c.mandatory), opt=usable.filter(c=>!c.mandatory);
+        if(n<mand.length){n=mand.length;toast('Количество увеличено: все обязательные карточки включены')}
+        const rest=opt.sort(()=>Math.random()-.5).slice(0,Math.max(0,n-mand.length));
+        game=[...mand,...rest].sort(()=>Math.random()-.5);
+        idx=0;right=0;wrong=0;history=[];
+        $('editor').style.display='none';$('result').style.display='none';$('game').style.display='block';renderGame();
+    }
+    function renderGame(){
+        const c=game[idx];$('progress').textContent=`${idx+1} / ${game.length}`;
+        $('question').innerHTML=c.q || c.qi ? (c.q || oldToHtml('',c.qi)) : '';
+        $('answer').innerHTML=c.a || c.ai ? (c.a || oldToHtml('',c.ai)) : '';
+        $('qFace').style.display='block';$('aFace').style.display='none';$('flipActions').style.display='flex';$('markActions').style.display='none';
+    }
+    function flip(){
+        $('qFace').style.display='none';$('aFace').style.display='block';
+        $('flipActions').style.display='none';$('markActions').style.display='flex';
+    }
+    function flipByCard(e){
+        if(e.target.closest('img')) return;
+        if($('qFace').style.display!=='none') flip();
+    }
+    function mark(ok){
+        if(ok)right++;else wrong++;history.push({card:game[idx],ok});
+        idx++; if(idx>=game.length){showResult();return} renderGame();
+    }
+    function showResult(){
+        $('game').style.display='none';$('result').style.display='block';
+        const pct=Math.round(right/game.length*100);
+        $('stats').innerHTML=`<span class="pill">Всего: ${game.length}</span><span class="pill">✓ Верно: ${right}</span><span class="pill">✕ Ошибки: ${wrong}</span><span class="pill">Результат: ${pct}%</span>`;
+        const bad=history.filter(x=>!x.ok);
+        $('wrongList').innerHTML=bad.length?'<h3>Карточки для повторения</h3>'+bad.map(x=>`<div class="panel"><div class="face-text">${x.card.q||''}</div><hr><div class="face-text">${x.card.a||''}</div></div>`).join(''):'<p>Отлично — ошибок нет 🎉</p>';
+    }
+    function backToEditor(){sync();$('game').style.display='none';$('result').style.display='none';$('editor').style.display='block';render()}
+    function exportData(){sync();const blob=new Blob([JSON.stringify({deckName:$('deckName').value,cards},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='memocards.json';a.click();URL.revokeObjectURL(a.href)}
+    function importData(ev){
+        const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{
+            let d;
+            try{d=JSON.parse(r.result)}catch(e){toast('Не удалось прочитать JSON: файл повреждён или имеет неверный формат');return}
+            try{
+                const list=Array.isArray(d)?d:d?.cards;
+                if(!Array.isArray(list))throw new Error('В JSON нет массива cards');
+                cards=list.map(normalize);
+                if(d && !Array.isArray(d) && d.deckName!=null)$('deckName').value=String(d.deckName);
+                save();render();toast('Импорт завершён');
+            }catch(e){console.error('MemoCards import error:',e);toast('JSON прочитан, но данные карточек имеют неподдерживаемый формат')}
+        };r.onerror=()=>toast('Не удалось прочитать файл');r.readAsText(f);ev.target.value='';
+    }
+    function openLightbox(src){$('zoomImg').src=src;$('lightbox').style.display='flex'}
+    function closeLightbox(){$('lightbox').style.display='none';$('zoomImg').src=''}
+
+    (()=>{const d=loadSaved();cards=(Array.isArray(d.cards)?d.cards:[]).map(normalize);$('deckName').value=d.deckName||'';render()})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
